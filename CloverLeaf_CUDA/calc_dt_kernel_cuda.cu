@@ -66,11 +66,12 @@ int* small)
 
     // reduce_ptr 2 is a thrust wrapper around work_array_2
     *dt_min_val = *thrust::min_element(reduce_ptr_2,
-                                       reduce_ptr_2 + num_blocks);
-
+                                       reduce_ptr_2 + num_blocks);                            
     // ditto on reduce ptr 1
     double jk_control = *thrust::max_element(reduce_ptr_1,
                                              reduce_ptr_1 + num_blocks);
+    std::cerr << "DT_MIN_VAL: " << *dt_min_val << " JK_CONTROL: " << jk_control << std::endl;
+    //fprintf(stderr, "DT_MIN_VAL: %f, JK_CONTROL: %f\n", *dt_min_val, jk_control);
 
     *dtl_control = 10.01 * (jk_control - static_cast<int>(jk_control));
 
