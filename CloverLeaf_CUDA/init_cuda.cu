@@ -175,7 +175,7 @@ num_blocks((((*in_x_max)+5)*((*in_y_max)+5))/BLOCK_SZ)
     void * devPtr;
     if (cudaMalloc((void**) &devPtr, buildSize) != cudaSuccess)
     {
-        std::cerr << "WE FAILED ALLOCATING" << std::endl:
+        std::cerr << "WE FAILED ALLOCATING" << std::endl;
         exit(-1);
     }
     cudaMemset(devPtr, 0, buildSize);
