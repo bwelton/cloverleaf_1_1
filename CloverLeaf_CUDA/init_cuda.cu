@@ -32,7 +32,7 @@ extern "C" void clover_get_rank_(int*);
 #include <sstream>
 #include <cstdio>
 #include <cassert>
-#include <vector>
+
 CloverleafCudaChunk cuda_chunk;
 
 extern "C" void initialise_cuda_
@@ -102,17 +102,18 @@ num_blocks((((*in_x_max)+5)*((*in_y_max)+5))/BLOCK_SZ)
         errorHandler(__LINE__, __FILE__);
     }
 #endif
-    size_t buildSize = 0;
-    std::vector<void **> ptrs;
-    std::vector<size_t> ptr_sizes;
+
     struct cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, device_id);
     std::cout << "CUDA using " << prop.name << std::endl;
 
     #define CUDA_ARRAY_ALLOC(arr, size)     \
-            ptrs.push_back((void**)&arr);   \
-            ptr_sizes.push_back(size);      \
-            buildSize += size;              
+            cudaMalloc((void**) &arr, size) == cudaSuccess;\
+            errorHandler(__LINE__, __FILE__);\
+            cudaDeviceSynchronize();        \
+            cudaMemset(arr, 0, size);       \
+            cudaDeviceSynchronize();        \
+            CUDA_ERR_CHECK;
 
     CUDA_ARRAY_ALLOC(volume, BUFSZ2D(0, 0));
     CUDA_ARRAY_ALLOC(soundspeed, BUFSZ2D(0, 0));
@@ -161,30 +162,6 @@ num_blocks((((*in_x_max)+5)*((*in_y_max)+5))/BLOCK_SZ)
     CUDA_ARRAY_ALLOC(reduce_buf_5, num_blocks*sizeof(double));
     CUDA_ARRAY_ALLOC(reduce_buf_6, num_blocks*sizeof(double));
 
-    CUDA_ARRAY_ALLOC(pdv_reduce_array, num_blocks*sizeof(int));
-    CUDA_ARRAY_ALLOC(dev_left_send_buffer, sizeof(double)*(y_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_right_send_buffer, sizeof(double)*(y_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_top_send_buffer, sizeof(double)*(x_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_bottom_send_buffer, sizeof(double)*(x_max+5)*2);
-
-    CUDA_ARRAY_ALLOC(dev_left_recv_buffer, sizeof(double)*(y_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_right_recv_buffer, sizeof(double)*(y_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_top_recv_buffer, sizeof(double)*(x_max+5)*2);
-    CUDA_ARRAY_ALLOC(dev_bottom_recv_buffer, sizeof(double)*(x_max+5)*2);
-
-    void * devPtr;
-    if (cudaMalloc((void**) &devPtr, buildSize) != cudaSuccess)
-    {
-        std::cerr << "WE FAILED ALLOCATING" << std::endl;
-        exit(-1);
-    }
-    cudaMemset(devPtr, 0, buildSize);
-    size_t curPos = 0;
-    for (int i = 0; i < ptrs.size(); i++) {
-        *(ptrs[i]) = (void *)&(((char *)(devPtr))[curPos]);
-        curPos += ptr_sizes[i];
-    }
-
     reduce_ptr_1 = thrust::device_ptr< double >(reduce_buf_1);
     reduce_ptr_2 = thrust::device_ptr< double >(reduce_buf_2);
     reduce_ptr_3 = thrust::device_ptr< double >(reduce_buf_3);
@@ -192,7 +169,7 @@ num_blocks((((*in_x_max)+5)*((*in_y_max)+5))/BLOCK_SZ)
     reduce_ptr_5 = thrust::device_ptr< double >(reduce_buf_5);
     reduce_ptr_6 = thrust::device_ptr< double >(reduce_buf_6);
 
-
+    CUDA_ARRAY_ALLOC(pdv_reduce_array, num_blocks*sizeof(int));
     reduce_pdv = thrust::device_ptr< int >(pdv_reduce_array);
 
     thr_cellx = thrust::device_ptr< double >(cellx);
@@ -206,7 +183,15 @@ num_blocks((((*in_x_max)+5)*((*in_y_max)+5))/BLOCK_SZ)
     thr_pressure = thrust::device_ptr< double >(pressure);
     thr_soundspeed = thrust::device_ptr< double >(soundspeed);
 
+    CUDA_ARRAY_ALLOC(dev_left_send_buffer, sizeof(double)*(y_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_right_send_buffer, sizeof(double)*(y_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_top_send_buffer, sizeof(double)*(x_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_bottom_send_buffer, sizeof(double)*(x_max+5)*2);
 
+    CUDA_ARRAY_ALLOC(dev_left_recv_buffer, sizeof(double)*(y_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_right_recv_buffer, sizeof(double)*(y_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_top_recv_buffer, sizeof(double)*(x_max+5)*2);
+    CUDA_ARRAY_ALLOC(dev_bottom_recv_buffer, sizeof(double)*(x_max+5)*2);
 
     #undef CUDA_ARRAY_ALLOC
 
