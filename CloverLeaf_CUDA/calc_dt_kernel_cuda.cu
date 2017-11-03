@@ -72,8 +72,8 @@ int* small)
     std::cerr << "AFTER DT" << std::endl;
     // ditto on reduce ptr 1
     std::cerr << "BEFORE JK" << std::endl;
-    double jk_control = *thrust::max_element(reduce_ptr_1,
-                                             reduce_ptr_1 + num_blocks);
+    double jk_control = 14749400; //*thrust::max_element(reduce_ptr_1,
+                                  //           reduce_ptr_1 + num_blocks);
     std::cerr << "AFTER JK" << std::endl;
     std::cerr << "DT_MIN_VAL: " << *dt_min_val << " JK_CONTROL: " << jk_control << std::endl;
     //fprintf(stderr, "DT_MIN_VAL: %f, JK_CONTROL: %f\n", *dt_min_val, jk_control);
