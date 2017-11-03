@@ -52,8 +52,10 @@ void CloverleafCudaChunk::PdV_kernel
             xvel0, yvel0, xvel1, yvel1);
     }
 
+    fprintf(stderr,"BEFORE ERROR CONDITION\n"):
     *error_condition = *thrust::max_element(reduce_pdv,
                                             reduce_pdv + num_blocks);
+    fprintf(stderr,"AFTER ERROR CONDITION\n"):
 
     if (1 == *error_condition)
     {
