@@ -59,17 +59,22 @@ int* jldt,
 int* kldt,
 int* small)
 {
+    std::cerr << "BEFORE CUDALAUNCH" << std::endl;
     CUDALAUNCH(device_calc_dt_kernel_cuda, g_small, g_big, dtmin, dtc_safe,
         dtu_safe, dtv_safe, dtdiv_safe, xarea, yarea, celldx, celldy,
         volume, density0, viscosity, soundspeed, xvel0, yvel0,
         reduce_buf_1, reduce_buf_2);
-
+    std::cerr << "AFTER CUDALAUNCH" << std::endl;
     // reduce_ptr 2 is a thrust wrapper around work_array_2
+    std::cerr << "BEFORE DT" << std::endl;
     *dt_min_val = *thrust::min_element(reduce_ptr_2,
                                        reduce_ptr_2 + num_blocks);                            
+    std::cerr << "AFTER DT" << std::endl;
     // ditto on reduce ptr 1
+    std::cerr << "BEFORE JK" << std::endl;
     double jk_control = *thrust::max_element(reduce_ptr_1,
                                              reduce_ptr_1 + num_blocks);
+    std::cerr << "AFTER JK" << std::endl;
     std::cerr << "DT_MIN_VAL: " << *dt_min_val << " JK_CONTROL: " << jk_control << std::endl;
     //fprintf(stderr, "DT_MIN_VAL: %f, JK_CONTROL: %f\n", *dt_min_val, jk_control);
 
